@@ -72,16 +72,11 @@ static int on_config_chroot(h2o_configurator_command_t *cmd, h2o_configurator_co
 {
     struct fastcgi_configurator_t *self = (void *)cmd->configurator;
 
-    if (node->data.scalar[0] == '\0') {
-        /* unset */
-        self->vars->chroot = h2o_iovec_init(NULL, 0);
-    } else if (node->data.scalar[0] == '/') {
-        /* set */
-        self->vars->chroot = h2o_iovec_init(node->data.scalar, strlen(node->data.scalar));
-    } else {
-        h2o_configurator_errprintf(cmd, node, "value does not start from `/`");
+    ssize_t ret = h2o_configurator_get_one_of(cmd, node, "OFF,ON");
+    if (ret == -1)
         return -1;
-    }
+    self->vars->chroot.enabled = (int)ret;
+
     return 0;
 }
 
@@ -379,6 +374,7 @@ void h2o_fastcgi_register_configurator(h2o_globalconf_t *conf)
     h2o_configurator_define_command(&c->super, "fastcgi.document_root",
                                     H2O_CONFIGURATOR_FLAG_ALL_LEVELS | H2O_CONFIGURATOR_FLAG_EXPECT_SCALAR,
                                     on_config_document_root);
+    /* fastcgi.chroot: ON | OFF */
     h2o_configurator_define_command(&c->super, "fastcgi.chroot",
                                     H2O_CONFIGURATOR_FLAG_ALL_LEVELS | H2O_CONFIGURATOR_FLAG_EXPECT_SCALAR,
                                     on_config_chroot);
