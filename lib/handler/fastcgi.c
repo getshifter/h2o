@@ -229,11 +229,10 @@ static void append_params(h2o_req_t *req, iovec_vector_t *vecs, h2o_fastcgi_conf
         if (config->chroot.enabled) {
             if (config->document_root.base != NULL && config->document_root.len > 1 ) {
                 /* join document_root and filename `/` */
-                int sf_len = config->document_root.len + filereq->script_name.len;
-                char sf_name[sf_len];
-                strcpy(sf_name, config->document_root.base);
-                strcat(sf_name, filereq->script_name.base);
-                append_pair(&req->pool, vecs, H2O_STRLIT("SCRIPT_FILENAME"), sf_name, sf_len);
+                char sf_name[config->document_root.len + filereq->script_name.len];
+                memcpy(sf_name, config->document_root.base, config->document_root.len);
+                memcpy(sf_name + config->document_root.len, filereq->script_name.base, filereq->script_name.len);
+                append_pair(&req->pool, vecs, H2O_STRLIT("SCRIPT_FILENAME"), sf_name, sizeof(sf_name));
             } else {
                 /* case document_root is only `/` */
                 append_pair(&req->pool, vecs, H2O_STRLIT("SCRIPT_FILENAME"), filereq->script_name.base, filereq->script_name.len);
